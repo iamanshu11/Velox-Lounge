@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+  # ─── PostgreSQL ──────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: velox_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dragonpass_db
+      POSTGRES_USER: dragonpass
+      POSTGRES_PASSWORD: dragonpass_secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dragonpass -d dragonpass_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Backend API ─────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: velox_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 5004
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: dragonpass_db
+      DB_USER: dragonpass
+      DB_PASSWORD: dragonpass_secret
+      DB_SSL: "false"
+      JWT_SECRET: ${JWT_SECRET:-change-this-to-a-long-random-secret-in-production}
+      JWT_EXPIRES_IN: 7d
+      CORS_ORIGIN: http://localhost:3004
+    ports:
+      - "5004:5004"
+
+  # ─── Frontend ────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:5004/api
+    container_name: velox_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      PORT: 3004
+    ports:
+      - "3004:3004"
+
+volumes:
+  postgres_data:
+    driver: local
