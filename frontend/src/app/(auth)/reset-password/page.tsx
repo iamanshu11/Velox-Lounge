@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,11 +14,13 @@ import Link from "next/link";
 
 type ResetForm = { token: string; password: string; confirmPassword: string };
 
-export default function ResetPasswordPage() {
+// Inner component that safely uses useSearchParams()
+function ResetPasswordForm() {
   const router = useRouter();
   const token = useSearchParams().get("token") || "";
   const [show, setShow] = useState(false);
   const [done, setDone] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -47,13 +49,10 @@ export default function ResetPasswordPage() {
         <div className="flex justify-center">
           <CheckCircle className="h-16 w-16 text-primary" />
         </div>
-
         <h2 className="mt-6 text-2xl font-bold">Password Updated</h2>
-
         <p className="mt-2 text-sm text-muted-foreground">
           Your password has been reset successfully.
         </p>
-
         <Link href="/login" className="block mt-6">
           <Button className="w-full">Sign In</Button>
         </Link>
@@ -65,7 +64,6 @@ export default function ResetPasswordPage() {
     <div className="w-full max-w-lg rounded-2xl border bg-card p-8 shadow-xl transition-all duration-300 hover:shadow-2xl">
       <div className="mb-8 text-center">
         <h2 className="text-2xl font-bold">Set New Password</h2>
-
         <p className="mt-2 text-sm text-muted-foreground">
           Choose a strong password for your account
         </p>
@@ -76,7 +74,6 @@ export default function ResetPasswordPage() {
 
         <div className="space-y-2">
           <Label htmlFor="password">New Password</Label>
-
           <div className="relative">
             <Input
               id="password"
@@ -84,41 +81,29 @@ export default function ResetPasswordPage() {
               placeholder="Enter new password"
               {...register("password")}
             />
-
             <button
               type="button"
               onClick={() => setShow(!show)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
             >
-              {show ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
+              {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-
           {errors.password && (
-            <p className="text-xs text-destructive">
-              {errors.password.message}
-            </p>
+            <p className="text-xs text-destructive">{errors.password.message}</p>
           )}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="confirmPassword">Confirm Password</Label>
-
           <Input
             id="confirmPassword"
             type="password"
             placeholder="Confirm new password"
             {...register("confirmPassword")}
           />
-
           {errors.confirmPassword && (
-            <p className="text-xs text-destructive">
-              {errors.confirmPassword.message}
-            </p>
+            <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
           )}
         </div>
 
@@ -140,5 +125,20 @@ export default function ResetPasswordPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+// Suspense wrapper required by Next.js when useSearchParams() is used
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full max-w-lg rounded-2xl border bg-card p-8 shadow-xl flex justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

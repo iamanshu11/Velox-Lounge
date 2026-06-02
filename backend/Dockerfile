@@ -1,15 +1,16 @@
 FROM node:20-alpine AS base
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies (includes devDeps for tsc)
 FROM base AS deps
 COPY package*.json ./
 RUN npm ci
 
-# Build
+# Build — must copy everything tsconfig includes (src/ + db/)
 FROM deps AS builder
 COPY tsconfig.json ./
 COPY src/ ./src/
+COPY db/ ./db/
 RUN npm run build
 
 # Production image
@@ -20,12 +21,14 @@ ENV NODE_ENV=production
 COPY package*.json ./
 RUN npm ci --omit=dev
 
+# tsc outputs dist/src/ and dist/db/ because rootDir is "./"
 COPY --from=builder /app/dist ./dist
 
-# Copy migration files for runtime db:migrate
+# Also need db/ source for tsx-based migration scripts at runtime
 COPY db/ ./db/
 RUN npm install tsx --save-dev
 
 EXPOSE 5004
 
-CMD ["node", "dist/server.js"]
+# Correct path: rootDir="./" so server.ts → dist/src/server.js
+CMD ["node", "dist/src/server.js"]

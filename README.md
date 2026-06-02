@@ -44,7 +44,7 @@ velox-lounge/
 |------------|------|
 | Frontend   | 3004 |
 | Backend    | 5004 |
-| PostgreSQL | 5432 |
+| PostgreSQL | 5435 |
 
 ---
 
@@ -171,7 +171,7 @@ Open **http://localhost:3004**
 | `PORT`           | `5004`                  | API server port                |
 | `NODE_ENV`       | `development`           | Environment                    |
 | `DB_HOST`        | `localhost`             | PostgreSQL host                |
-| `DB_PORT`        | `5432`                  | PostgreSQL port                |
+| `DB_PORT`        | `5435`                  | PostgreSQL port                |
 | `DB_NAME`        | `dragonpass_db`         | Database name                  |
 | `DB_USER`        | —                       | Database user                  |
 | `DB_PASSWORD`    | —                       | Database password              |
